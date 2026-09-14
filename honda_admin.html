@@ -4,606 +4,346 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Honda Bangladesh - HQ Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f0f0f0; color: #333; }
-
-  /* HEADER */
-  .header {
-    background: #CC0000;
-    padding: 14px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header h1 { color: white; font-size: 18px; font-weight: bold; }
-  .header span { color: #ffcccc; font-size: 13px; display: block; }
-  .btn-logout {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.4);
-    padding: 7px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 13px;
-  }
+  .header { background: #CC0000; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left h1 { color: white; font-size: 19px; font-weight: bold; }
+  .header-left span { color: #ffcccc; font-size: 13px; }
+  .btn-logout { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 7px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; }
   .btn-logout:hover { background: rgba(255,255,255,0.35); }
-
-  /* LOGIN */
-  .login-wrap {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .login-card {
-    background: white;
-    border-radius: 12px;
-    padding: 40px 36px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 380px;
-    text-align: center;
-  }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f0f0f0; }
+  .login-card { background: white; border-radius: 12px; padding: 40px 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); width: 100%; max-width: 380px; text-align: center; }
   .login-card h2 { color: #CC0000; font-size: 22px; margin-bottom: 4px; }
-  .login-card .sub { color: #888; font-size: 13px; margin-bottom: 28px; }
-  .login-card input {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid #ddd;
-    border-radius: 6px;
-    font-size: 15px;
-    margin-bottom: 14px;
-  }
+  .login-card p { color: #888; font-size: 14px; margin-bottom: 26px; }
+  .login-card input { width: 100%; padding: 11px 14px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 15px; margin-bottom: 12px; }
   .login-card input:focus { outline: none; border-color: #CC0000; }
-  .btn-login {
-    width: 100%;
-    padding: 12px;
-    background: #CC0000;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-  }
+  .btn-login { width: 100%; padding: 12px; background: #CC0000; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
   .btn-login:hover { background: #aa0000; }
+  .btn-login:disabled { background: #e08080; cursor: not-allowed; }
   .login-error { color: #CC0000; font-size: 13px; margin-top: 10px; display: none; }
   .login-error.show { display: block; }
-
-  /* LAYOUT */
   .dashboard { display: none; }
   .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 60px; }
-
-  /* TABS */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 24px;
-    background: white;
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
-  .tab {
-    padding: 10px 22px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #666;
-    font-weight: bold;
-    border: none;
-    background: none;
-    transition: all 0.2s;
-  }
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: white; border-radius: 10px; padding: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .tab { flex: 1; padding: 10px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: bold; color: #888; transition: all 0.2s; }
   .tab.active { background: #CC0000; color: white; }
-  .tab:hover:not(.active) { background: #f5f5f5; }
-
-  /* STATS */
+  .tab:hover:not(.active) { background: #f5f5f5; color: #333; }
   .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
-  .stat-card {
-    background: white;
-    border-radius: 10px;
-    padding: 18px 16px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border-top: 4px solid #ddd;
-  }
-  .stat-card.total    { border-top-color: #CC0000; }
-  .stat-card.pending  { border-top-color: #f39c12; }
-  .stat-card.confirmed{ border-top-color: #27ae60; }
-  .stat-card.completed{ border-top-color: #2980b9; }
-  .stat-card.cancelled{ border-top-color: #95a5a6; }
-  .stat-num  { font-size: 30px; font-weight: bold; color: #333; }
-  .stat-label{ font-size: 12px; color: #888; margin-top: 4px; }
-
-  /* CARD */
-  .card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  .card-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 15px;
-    font-weight: bold;
-    color: #333;
-  }
-  .btn-refresh {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    padding: 6px 14px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #555;
-  }
-  .btn-refresh:hover { background: #e8e8e8; }
-
-  /* FILTERS */
-  .filters {
-    padding: 14px 20px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fafafa;
-  }
-  .filters select, .filters input {
-    padding: 8px 12px;
-    border: 1.5px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-  }
+  .stat-card { background: white; border-radius: 10px; padding: 18px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-top: 4px solid #ddd; }
+  .stat-card.total { border-top-color: #CC0000; }
+  .stat-card.pending { border-top-color: #f39c12; }
+  .stat-card.confirmed { border-top-color: #27ae60; }
+  .stat-card.completed { border-top-color: #2980b9; }
+  .stat-card.dealers { border-top-color: #8e44ad; }
+  .stat-card .num { font-size: 30px; font-weight: bold; color: #333; }
+  .stat-card .lbl { font-size: 12px; color: #888; margin-top: 4px; }
+  .filters { background: white; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .filters select, .filters input { padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 14px; }
   .filters select:focus, .filters input:focus { outline: none; border-color: #CC0000; }
-
-  /* TABLE */
-  .table-scroll { overflow-x: auto; }
+  .btn-export { margin-left: auto; background: #27ae60; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+  .btn-export:hover { background: #1e8449; }
+  .table-wrap { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+  .table-title { padding: 14px 20px; font-size: 15px; font-weight: bold; color: #333; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+  .btn-refresh { background: #f5f5f5; border: 1px solid #ddd; padding: 6px 14px; border-radius: 5px; cursor: pointer; font-size: 13px; color: #555; }
+  .btn-refresh:hover { background: #e8e8e8; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    background: #fafafa;
-    padding: 11px 14px;
-    text-align: left;
-    font-size: 11px;
-    color: #888;
-    text-transform: uppercase;
-    border-bottom: 1px solid #eee;
-    white-space: nowrap;
-  }
-  td { padding: 12px 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+  th { background: #fafafa; padding: 11px 13px; text-align: left; font-size: 11px; color: #888; text-transform: uppercase; border-bottom: 1px solid #eee; white-space: nowrap; }
+  td { padding: 12px 13px; border-bottom: 1px solid #f5f5f5; vertical-align: top; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafafa; }
-
-  /* BADGES */
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: bold;
-  }
-  .badge.pending   { background: #fef3cd; color: #856404; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+  .badge.pending { background: #fef3cd; color: #856404; }
   .badge.confirmed { background: #d1e7dd; color: #0f5132; }
   .badge.completed { background: #cfe2ff; color: #084298; }
   .badge.cancelled { background: #f8d7da; color: #842029; }
-
-  /* DEALER TABLE */
-  .dlr-table td:first-child { font-weight: bold; }
-  .progress-bar {
-    height: 6px;
-    background: #eee;
-    border-radius: 3px;
-    margin-top: 4px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: #CC0000;
-    border-radius: 3px;
-    transition: width 0.4s;
-  }
-
-  /* EXPORT BTN */
-  .btn-export {
-    background: #27ae60;
-    color: white;
-    border: none;
-    padding: 7px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: bold;
-  }
-  .btn-export:hover { background: #1e8449; }
-
-  /* EMPTY / LOADING */
-  .empty   { text-align: center; padding: 48px; color: #aaa; font-size: 15px; }
+  .dlr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .dlr-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #CC0000; }
+  .dlr-card h4 { font-size: 14px; color: #333; margin-bottom: 4px; }
+  .dlr-card .dlr-meta { font-size: 12px; color: #888; margin-bottom: 10px; }
+  .dlr-stats { display: flex; gap: 10px; }
+  .dlr-stat { text-align: center; flex: 1; }
+  .dlr-stat .n { font-size: 20px; font-weight: bold; }
+  .dlr-stat .l { font-size: 11px; color: #888; }
+  .dlr-stat.p .n { color: #f39c12; }
+  .dlr-stat.c .n { color: #27ae60; }
+  .dlr-stat.d .n { color: #2980b9; }
+  .chart-wrap { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+  .chart-wrap h3 { font-size: 15px; color: #333; margin-bottom: 16px; }
+  .bar-row { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; }
+  .bar-label { width: 160px; font-size: 12px; color: #555; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: #f0f0f0; border-radius: 4px; height: 22px; }
+  .bar-fill { height: 100%; border-radius: 4px; background: #CC0000; display: flex; align-items: center; padding-left: 8px; min-width: 28px; }
+  .bar-fill span { font-size: 11px; color: white; font-weight: bold; }
+  .empty { text-align: center; padding: 48px; color: #aaa; font-size: 15px; }
   .loading { text-align: center; padding: 40px; color: #999; }
-
-  /* DIVISION BREAKDOWN */
-  .div-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 20px; }
-  .div-card {
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 14px 16px;
-  }
-  .div-card h4 { font-size: 14px; color: #CC0000; margin-bottom: 8px; }
-  .div-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #555; }
-  .div-row strong { color: #333; }
-
-  @media(max-width:800px) {
-    .stats { grid-template-columns: repeat(2,1fr); }
-    .div-grid { grid-template-columns: 1fr; }
-  }
+  .pagination { display: flex; gap: 6px; justify-content: center; padding: 16px; }
+  .page-btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-size: 13px; background: white; }
+  .page-btn.active { background: #CC0000; color: white; border-color: #CC0000; }
+  .page-btn:hover:not(.active) { background: #f5f5f5; }
+  .page-info { font-size: 13px; color: #888; margin-top: 12px; text-align: right; padding: 0 16px 12px; }
+  @media(max-width:700px) { .stats { grid-template-columns: repeat(2,1fr); } .tabs { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
     <h2>🏍️ Honda Bangladesh</h2>
-    <p class="sub">HQ Admin Dashboard<br>Authorized personnel only</p>
-    <input type="text" id="adminUser" placeholder="Username">
+    <p>HQ Admin Dashboard<br>Sign in with your official email</p>
+    <input type="email" id="adminEmail" placeholder="Email address">
     <input type="password" id="adminPass" placeholder="Password">
-    <button class="btn-login" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Invalid email or password. Please try again.</div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dashboard" id="dashboardPage">
   <div class="header">
-    <div>
+    <div class="header-left">
       <h1>🏍️ Honda Bangladesh — HQ Admin</h1>
-      <span>All Dealers · All Divisions · Live Data</span>
+      <span id="adminEmailDisplay">Loading...</span>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-    </div>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
-
   <div class="container">
-
-    <!-- STATS -->
-    <div class="stats">
-      <div class="stat-card total">    <div class="stat-num" id="sTotal">0</div><div class="stat-label">Total Bookings</div></div>
-      <div class="stat-card pending">  <div class="stat-num" id="sPending">0</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card confirmed"><div class="stat-num" id="sConfirmed">0</div><div class="stat-label">Confirmed</div></div>
-      <div class="stat-card completed"><div class="stat-num" id="sCompleted">0</div><div class="stat-label">Completed</div></div>
-      <div class="stat-card cancelled"><div class="stat-num" id="sCancelled">0</div><div class="stat-label">Cancelled</div></div>
-    </div>
-
-    <!-- TABS -->
     <div class="tabs">
-      <button class="tab active" onclick="showTab('bookings',this)">📋 All Bookings</button>
-      <button class="tab" onclick="showTab('dealers',this)">🏪 Dealer Summary</button>
-      <button class="tab" onclick="showTab('divisions',this)">🗺️ Division Breakdown</button>
+      <div class="tab active" onclick="showTab('bookings')">📋 All Bookings</div>
+      <div class="tab" onclick="showTab('dealers')">🏪 Dealer Summary</div>
+      <div class="tab" onclick="showTab('charts')">📊 Analytics</div>
     </div>
-
-    <!-- TAB: ALL BOOKINGS -->
+    <div class="stats">
+      <div class="stat-card total"><div class="num" id="sTotal">—</div><div class="lbl">Total Bookings</div></div>
+      <div class="stat-card pending"><div class="num" id="sPending">—</div><div class="lbl">Pending</div></div>
+      <div class="stat-card confirmed"><div class="num" id="sConfirmed">—</div><div class="lbl">Confirmed</div></div>
+      <div class="stat-card completed"><div class="num" id="sCompleted">—</div><div class="lbl">Completed</div></div>
+      <div class="stat-card dealers"><div class="num" id="sDealers">—</div><div class="lbl">Active Dealers</div></div>
+    </div>
     <div id="tab-bookings">
-      <div class="card">
-        <div class="card-header">
-          <span>All Appointments</span>
+      <div class="filters">
+        <select id="fStatus" onchange="applyFilter()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="fDivision" onchange="applyFilter()"><option value="">All Divisions</option></select>
+        <input type="date" id="fDate" onchange="applyFilter()">
+        <input type="text" id="fSearch" oninput="applyFilter()" placeholder="Search name / mobile / chassis...">
+        <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-title">
+          <span id="tableLabel">All Bookings</span>
           <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
         </div>
-        <div class="filters">
-          <select id="fStatus" onchange="applyFilter()">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <select id="fDivision" onchange="applyFilter()">
-            <option value="">All Divisions</option>
-          </select>
-          <select id="fDealer" onchange="applyFilter()">
-            <option value="">All Dealers</option>
-          </select>
-          <select id="fService" onchange="applyFilter()">
-            <option value="">All Services</option>
-           <option value="">-- Select Service Type --</option>
-           <option value="1">Free Service - 1st</option>
-           <option value="2">Free Service - 2nd</option>
-           <option value="3">Free Service - 3rd</option>
-           <option value="4">Free Service - 4th</option>
-           <option value="5">Free Service - 5th</option>
-           <option value="6">Paid Service</option>
-           <option value="7">General Repair</option>
-          </select>
-          <input type="date" id="fDate" onchange="applyFilter()">
-          <input type="text" id="fSearch" oninput="applyFilter()" placeholder="Search name / mobile / chassis...">
-        </div>
-        <div class="table-scroll">
-          <div id="bookingTable"><div class="loading">Loading...</div></div>
-        </div>
+        <div id="tableBody"><div class="loading">Loading...</div></div>
+        <div class="pagination" id="pagination"></div>
+        <div class="page-info" id="pageInfo"></div>
       </div>
     </div>
-
-    <!-- TAB: DEALER SUMMARY -->
-    <div id="tab-dealers" style="display:none">
-      <div class="card">
-        <div class="card-header"><span>Dealer Performance Summary</span></div>
-        <div class="table-scroll">
-          <div id="dealerTable"><div class="loading">Loading...</div></div>
-        </div>
-      </div>
+    <div id="tab-dealers" style="display:none"><div class="dlr-grid" id="dealerGrid"><div class="loading">Loading...</div></div></div>
+    <div id="tab-charts" style="display:none">
+      <div class="chart-wrap"><h3>Top 15 Dealers by Bookings</h3><div id="chartDealers"></div></div>
+      <div class="chart-wrap"><h3>Bookings by Division</h3><div id="chartDivisions"></div></div>
+      <div class="chart-wrap"><h3>Bookings by Service Type</h3><div id="chartServices"></div></div>
     </div>
-
-    <!-- TAB: DIVISION BREAKDOWN -->
-    <div id="tab-divisions" style="display:none">
-      <div class="card">
-        <div class="card-header"><span>Division-wise Booking Summary</span></div>
-        <div class="div-grid" id="divGrid"><div class="loading">Loading...</div></div>
-      </div>
-    </div>
-
   </div>
 </div>
 
 <script>
 const SUPABASE_URL = 'https://gqqenlxcarksuyskecpk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxcWVubHhjYXJrc3V5c2tlY3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTI3OTcsImV4cCI6MjA5NTE2ODc5N30.FDtx3E_Z73EfsHNuFQ_b2hQs44JDkgaxzK-vNtZW7u4';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// !! Change these credentials before going live !!
-const ADMIN_USER = 'hondabd';
-const ADMIN_PASS = 'Honda@2026';
+const SERVICE_NAMES = {1:'Free Service - 1st',2:'Free Service - 2nd',3:'Free Service - 3rd',4:'Free Service - 4th',5:'Free Service - 5th',6:'Paid Service',7:'General Repair'};
 
-const headers = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': 'Bearer ' + SUPABASE_KEY
-};
+let allBookings = [], allDealers = [], filtered = [];
+let currentPage = 1;
+const PER_PAGE = 25;
 
-const SVC = {1:'Free Service - 1st',2:'Free Service - 2nd',3:'Free Service - 3rd',4:'Free Service - 4th',5:'Free Service - 5th',6:'Paid Service',7:'General Repair'};
+// Check if already logged in
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const isAdmin = await checkAdminRole(session.user.id);
+    if (isAdmin) {
+      showDashboard(session.user.email);
+    } else {
+      document.getElementById('loginError').textContent = 'You do not have admin access.';
+      document.getElementById('loginError').classList.add('show');
+    }
+  }
+}
 
-let allBookings = [];
-let allDealers  = [];
+async function checkAdminRole(userId) {
+  const { data } = await sb.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').single();
+  return !!data;
+}
 
-// ── LOGIN ──
-function doLogin() {
-  const u = document.getElementById('adminUser').value.trim();
-  const p = document.getElementById('adminPass').value.trim();
-  const e = document.getElementById('loginError');
-  e.classList.remove('show');
-  if (u !== ADMIN_USER || p !== ADMIN_PASS) { e.classList.add('show'); return; }
-  document.getElementById('loginPage').style.display  = 'none';
+async function doLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPass').value.trim();
+  const err = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  err.classList.remove('show');
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; err.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { err.textContent = 'Invalid email or password.'; err.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign In'; return; }
+  const isAdmin = await checkAdminRole(data.user.id);
+  if (!isAdmin) { err.textContent = 'You do not have admin access.'; err.classList.add('show'); await sb.auth.signOut(); btn.disabled = false; btn.textContent = 'Sign In'; return; }
+  showDashboard(data.user.email);
+  btn.disabled = false; btn.textContent = 'Sign In';
+}
+
+function showDashboard(email) {
+  document.getElementById('loginPage').style.display = 'none';
   document.getElementById('dashboardPage').style.display = 'block';
+  document.getElementById('adminEmailDisplay').textContent = email + ' — HQ Admin';
   loadAll();
 }
-document.getElementById('adminPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-function doLogout() {
+async function doLogout() {
+  await sb.auth.signOut();
   document.getElementById('dashboardPage').style.display = 'none';
   document.getElementById('loginPage').style.display = 'flex';
-  document.getElementById('adminUser').value = '';
+  document.getElementById('adminEmail').value = '';
   document.getElementById('adminPass').value = '';
 }
 
-// ── LOAD DATA ──
 async function loadAll() {
+  document.getElementById('tableBody').innerHTML = '<div class="loading">Loading all bookings...</div>';
   const [bRes, dRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/bookings?order=created_at.desc&select=*`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/dealers?order=dealer_name&select=*`, { headers })
+    sb.from('bookings').select('*').order('created_at', { ascending: false }).limit(2000),
+    sb.from('dealers').select('*').order('dealer_name')
   ]);
-  allBookings = await bRes.json();
-  allDealers  = await dRes.json();
+  allBookings = bRes.data || [];
+  allDealers = dRes.data || [];
   updateStats();
-  populateFilters();
+  populateDivisionFilter();
   applyFilter();
-  renderDealerTable();
-  renderDivisions();
+  buildDealerGrid();
+  buildCharts();
 }
 
 function updateStats() {
-  document.getElementById('sTotal').textContent     = allBookings.length;
-  document.getElementById('sPending').textContent   = allBookings.filter(b=>b.status==='pending').length;
+  document.getElementById('sTotal').textContent = allBookings.length;
+  document.getElementById('sPending').textContent = allBookings.filter(b=>b.status==='pending').length;
   document.getElementById('sConfirmed').textContent = allBookings.filter(b=>b.status==='confirmed').length;
   document.getElementById('sCompleted').textContent = allBookings.filter(b=>b.status==='completed').length;
-  document.getElementById('sCancelled').textContent = allBookings.filter(b=>b.status==='cancelled').length;
+  document.getElementById('sDealers').textContent = new Set(allBookings.map(b=>b.dealer_code)).size;
 }
 
-function populateFilters() {
-  // Divisions
+function populateDivisionFilter() {
   const divs = [...new Set(allDealers.map(d=>d.division))].sort();
-  const fDiv = document.getElementById('fDivision');
-  fDiv.innerHTML = '<option value="">All Divisions</option>';
-  divs.forEach(d => { const o=document.createElement('option'); o.value=d; o.textContent=d; fDiv.appendChild(o); });
-
-  // Dealers
-  const fDlr = document.getElementById('fDealer');
-  fDlr.innerHTML = '<option value="">All Dealers</option>';
-  allDealers.forEach(d => { const o=document.createElement('option'); o.value=d.dealer_code; o.textContent=d.dealer_name; fDlr.appendChild(o); });
+  const sel = document.getElementById('fDivision');
+  sel.innerHTML = '<option value="">All Divisions</option>';
+  divs.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o); });
 }
 
-// ── FILTER BOOKINGS ──
 function applyFilter() {
-  const status  = document.getElementById('fStatus').value;
-  const div     = document.getElementById('fDivision').value;
-  const dealer  = document.getElementById('fDealer').value;
-  const service = document.getElementById('fService').value;
-  const date    = document.getElementById('fDate').value;
-  const search  = document.getElementById('fSearch').value.toLowerCase();
-
-  // when division selected, filter dealer dropdown
-  const fDlr = document.getElementById('fDealer');
-  if (div) {
-    const divDealers = allDealers.filter(d=>d.division===div);
-    fDlr.innerHTML = '<option value="">All Dealers</option>';
-    divDealers.forEach(d => { const o=document.createElement('option'); o.value=d.dealer_code; o.textContent=d.dealer_name; fDlr.appendChild(o); });
-  }
-
-  let filtered = allBookings;
-  if (status)  filtered = filtered.filter(b=>b.status===status);
-  if (dealer)  filtered = filtered.filter(b=>b.dealer_code===dealer);
-  if (service) filtered = filtered.filter(b=>String(b.service_type_id)===service);
-  if (date)    filtered = filtered.filter(b=>b.appointment_date===date);
-  if (div) {
-    const codes = allDealers.filter(d=>d.division===div).map(d=>d.dealer_code);
-    filtered = filtered.filter(b=>codes.includes(b.dealer_code));
-  }
-  if (search) filtered = filtered.filter(b=>
-    (b.customer_name||'').toLowerCase().includes(search)||
-    (b.mobile||'').includes(search)||
-    (b.chassis_no||'').toLowerCase().includes(search)
-  );
-  renderBookingTable(filtered);
+  const status = document.getElementById('fStatus').value;
+  const division = document.getElementById('fDivision').value;
+  const date = document.getElementById('fDate').value;
+  const search = document.getElementById('fSearch').value.toLowerCase();
+  const dealerByDiv = division ? new Set(allDealers.filter(d=>d.division===division).map(d=>d.dealer_code)) : null;
+  filtered = allBookings.filter(b => {
+    if (status && b.status !== status) return false;
+    if (dealerByDiv && !dealerByDiv.has(b.dealer_code)) return false;
+    if (date && b.appointment_date !== date) return false;
+    if (search && !((b.customer_name||'').toLowerCase().includes(search)||(b.mobile||'').includes(search)||(b.chassis_no||'').toLowerCase().includes(search)||(b.dealer_code||'').toLowerCase().includes(search))) return false;
+    return true;
+  });
+  currentPage = 1;
+  document.getElementById('tableLabel').textContent = `Showing ${filtered.length} booking${filtered.length!==1?'s':''}`;
+  renderPage();
 }
 
-// ── RENDER BOOKINGS ──
-function renderBookingTable(bookings) {
-  if (!bookings.length) {
-    document.getElementById('bookingTable').innerHTML = '<div class="empty">No bookings found.</div>';
-    return;
-  }
-  const dealerMap = {};
-  allDealers.forEach(d => dealerMap[d.dealer_code] = d);
-
-  let html = `<table><thead><tr>
-    <th>#</th><th>Booked</th><th>Customer</th><th>Chassis</th>
-    <th>Service</th><th>Dealer</th><th>Division</th><th>Appt. Date</th><th>Time</th><th>Status</th><th>Remarks</th>
-  </tr></thead><tbody>`;
-
-  bookings.forEach(b => {
-    const dlr = dealerMap[b.dealer_code] || {};
+function renderPage() {
+  const start = (currentPage-1)*PER_PAGE;
+  const slice = filtered.slice(start, start+PER_PAGE);
+  const totalPages = Math.ceil(filtered.length/PER_PAGE);
+  if (!filtered.length) { document.getElementById('tableBody').innerHTML = '<div class="empty">No bookings found.</div>'; document.getElementById('pagination').innerHTML = ''; document.getElementById('pageInfo').textContent = ''; return; }
+  const dlrMap = {};
+  allDealers.forEach(d => dlrMap[d.dealer_code] = d);
+  let html = `<table><thead><tr><th>#</th><th>Booked</th><th>Customer</th><th>Chassis</th><th>Dealer</th><th>Division</th><th>Service</th><th>Appt. Date</th><th>Time</th><th>Status</th><th>Remarks</th></tr></thead><tbody>`;
+  slice.forEach(b => {
+    const dlr = dlrMap[b.dealer_code] || {};
     const apptDate = b.appointment_date ? new Date(b.appointment_date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '-';
-    const bookedOn = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '-';
-    html += `<tr>
-      <td><strong>#${b.id}</strong></td>
-      <td>${bookedOn}</td>
-      <td><strong>${b.customer_name}</strong><br><small>${b.mobile}</small></td>
-      <td style="font-family:monospace;font-size:12px">${b.chassis_no}</td>
-      <td>${SVC[b.service_type_id]||'-'}</td>
-      <td><strong>${dlr.dealer_name||b.dealer_code}</strong><br><small style="color:#aaa">${dlr.thana||''}</small></td>
-      <td><small>${dlr.division||'-'}</small></td>
-      <td>${apptDate}</td>
-      <td>${b.appointment_time||'-'}</td>
-      <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
-      <td><small style="color:#888">${b.remarks||''}</small>${b.dealer_remarks?'<br><small style="color:#2980b9">📝 '+b.dealer_remarks+'</small>':''}</td>
-    </tr>`;
+    const bookedAt = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '-';
+    const svc = SERVICE_NAMES[b.service_type_id] || '-';
+    const badge = `<span class="badge ${b.status}">${cap(b.status)}</span>`;
+    const remarks = [b.remarks?`👤 ${escHtml(b.remarks)}`:'', b.dealer_remarks?`🏪 ${escHtml(b.dealer_remarks)}`:''].filter(Boolean).join('<br>');
+    html += `<tr><td><strong>#${b.id}</strong></td><td>${bookedAt}</td><td><strong>${escHtml(b.customer_name)}</strong><br><small>${escHtml(b.mobile)}</small></td><td style="font-family:monospace;font-size:12px">${escHtml(b.chassis_no)}</td><td><strong>${escHtml(dlr.dealer_name||b.dealer_code)}</strong><br><small style="color:#aaa">${escHtml(dlr.thana||'')}</small></td><td><small>${escHtml(dlr.division||'-')}</small></td><td><small>${svc}</small></td><td>${apptDate}</td><td>${b.appointment_time||'-'}</td><td>${badge}</td><td><small style="color:#666">${remarks||'-'}</small></td></tr>`;
   });
   html += '</tbody></table>';
-  document.getElementById('bookingTable').innerHTML = html;
+  document.getElementById('tableBody').innerHTML = html;
+  document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages} — ${filtered.length} total`;
+  let pag = '';
+  if (currentPage > 1) pag += `<button class="page-btn" onclick="gotoPage(${currentPage-1})">← Prev</button>`;
+  const from = Math.max(1,currentPage-2), to = Math.min(totalPages,currentPage+2);
+  for (let i=from;i<=to;i++) pag += `<button class="page-btn${i===currentPage?' active':''}" onclick="gotoPage(${i})">${i}</button>`;
+  if (currentPage < totalPages) pag += `<button class="page-btn" onclick="gotoPage(${currentPage+1})">Next →</button>`;
+  document.getElementById('pagination').innerHTML = pag;
 }
 
-// ── DEALER SUMMARY ──
-function renderDealerTable() {
-  const map = {};
+function gotoPage(n) { currentPage = n; renderPage(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function buildDealerGrid() {
+  const countMap = {};
   allBookings.forEach(b => {
-    if (!map[b.dealer_code]) map[b.dealer_code] = { total:0, pending:0, confirmed:0, completed:0, cancelled:0 };
-    map[b.dealer_code].total++;
-    map[b.dealer_code][b.status] = (map[b.dealer_code][b.status]||0) + 1;
+    if (!countMap[b.dealer_code]) countMap[b.dealer_code] = {total:0,pending:0,confirmed:0,completed:0};
+    countMap[b.dealer_code].total++;
+    if (b.status==='pending') countMap[b.dealer_code].pending++;
+    if (b.status==='confirmed') countMap[b.dealer_code].confirmed++;
+    if (b.status==='completed') countMap[b.dealer_code].completed++;
   });
-
-  const dealerMap = {};
-  allDealers.forEach(d => dealerMap[d.dealer_code] = d);
-
-  const rows = allDealers.map(d => ({
-    ...d,
-    stats: map[d.dealer_code] || { total:0, pending:0, confirmed:0, completed:0, cancelled:0 }
-  })).sort((a,b) => b.stats.total - a.stats.total);
-
-  const maxTotal = Math.max(...rows.map(r=>r.stats.total), 1);
-
-  let html = `<table class="dlr-table"><thead><tr>
-    <th>Dealer</th><th>Division</th><th>District</th><th>Total</th>
-    <th>Pending</th><th>Confirmed</th><th>Completed</th><th>Cancelled</th><th>Activity</th>
-  </tr></thead><tbody>`;
-
-  rows.forEach(r => {
-    const pct = Math.round((r.stats.total / maxTotal) * 100);
-    html += `<tr>
-      <td><strong>${r.dealer_name}</strong><br><small style="color:#aaa;font-size:11px">${r.dealer_code}</small></td>
-      <td><small>${r.division}</small></td>
-      <td><small>${r.district}</small></td>
-      <td><strong>${r.stats.total}</strong></td>
-      <td><span style="color:#856404">${r.stats.pending||0}</span></td>
-      <td><span style="color:#0f5132">${r.stats.confirmed||0}</span></td>
-      <td><span style="color:#084298">${r.stats.completed||0}</span></td>
-      <td><span style="color:#842029">${r.stats.cancelled||0}</span></td>
-      <td style="min-width:100px">
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('dealerTable').innerHTML = html;
+  const sorted = allDealers.map(d=>({...d,counts:countMap[d.dealer_code]||{total:0,pending:0,confirmed:0,completed:0}})).sort((a,b)=>b.counts.total-a.counts.total);
+  document.getElementById('dealerGrid').innerHTML = sorted.map(d=>`<div class="dlr-card"><h4>${escHtml(d.dealer_name)}</h4><div class="dlr-meta">${escHtml(d.dealer_code)} · ${escHtml(d.district)} · ${escHtml(d.division)}</div><div class="dlr-stats"><div class="dlr-stat p"><div class="n">${d.counts.pending}</div><div class="l">Pending</div></div><div class="dlr-stat c"><div class="n">${d.counts.confirmed}</div><div class="l">Confirmed</div></div><div class="dlr-stat d"><div class="n">${d.counts.completed}</div><div class="l">Completed</div></div><div class="dlr-stat"><div class="n">${d.counts.total}</div><div class="l">Total</div></div></div></div>`).join('') || '<div class="empty">No data.</div>';
 }
 
-// ── DIVISION BREAKDOWN ──
-function renderDivisions() {
-  const dealerDiv = {};
-  allDealers.forEach(d => dealerDiv[d.dealer_code] = d.division);
-
-  const divMap = {};
-  allBookings.forEach(b => {
-    const div = dealerDiv[b.dealer_code] || 'Unknown';
-    if (!divMap[div]) divMap[div] = { total:0, pending:0, confirmed:0, completed:0 };
-    divMap[div].total++;
-    divMap[div][b.status] = (divMap[div][b.status]||0)+1;
-  });
-
-  const divNames = [...new Set(allDealers.map(d=>d.division))].sort();
-  let html = '';
-  divNames.forEach(div => {
-    const s = divMap[div] || { total:0, pending:0, confirmed:0, completed:0 };
-    const dlrCount = allDealers.filter(d=>d.division===div).length;
-    html += `<div class="div-card">
-      <h4>${div}</h4>
-      <div class="div-row"><span>Dealers</span><strong>${dlrCount}</strong></div>
-      <div class="div-row"><span>Total Bookings</span><strong>${s.total}</strong></div>
-      <div class="div-row"><span>Pending</span><strong style="color:#856404">${s.pending||0}</strong></div>
-      <div class="div-row"><span>Confirmed</span><strong style="color:#0f5132">${s.confirmed||0}</strong></div>
-      <div class="div-row"><span>Completed</span><strong style="color:#084298">${s.completed||0}</strong></div>
-    </div>`;
-  });
-  document.getElementById('divGrid').innerHTML = html || '<div class="empty">No data yet.</div>';
+function buildCharts() {
+  const dlrCount = {};
+  const dlrMap = {}; allDealers.forEach(d=>dlrMap[d.dealer_code]=d.dealer_name);
+  allBookings.forEach(b=>{dlrCount[b.dealer_code]=(dlrCount[b.dealer_code]||0)+1;});
+  const topDlr = Object.entries(dlrCount).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const maxDlr = topDlr[0]?.[1]||1;
+  document.getElementById('chartDealers').innerHTML = topDlr.map(([code,cnt])=>`<div class="bar-row"><div class="bar-label" title="${escHtml(dlrMap[code]||code)}">${escHtml(dlrMap[code]||code)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxDlr*100)}%"><span>${cnt}</span></div></div></div>`).join('') || '<div class="empty">No data yet.</div>';
+  const divCount = {};
+  allBookings.forEach(b=>{const dlr=allDealers.find(d=>d.dealer_code===b.dealer_code);const div=dlr?.division||'Unknown';divCount[div]=(divCount[div]||0)+1;});
+  const topDiv = Object.entries(divCount).sort((a,b)=>b[1]-a[1]);
+  const maxDiv = topDiv[0]?.[1]||1;
+  document.getElementById('chartDivisions').innerHTML = topDiv.map(([div,cnt])=>`<div class="bar-row"><div class="bar-label">${escHtml(div)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxDiv*100)}%;background:#8e44ad"><span>${cnt}</span></div></div></div>`).join('') || '<div class="empty">No data yet.</div>';
+  const svcCount = {};
+  allBookings.forEach(b=>{const s=SERVICE_NAMES[b.service_type_id]||'Unknown';svcCount[s]=(svcCount[s]||0)+1;});
+  const topSvc = Object.entries(svcCount).sort((a,b)=>b[1]-a[1]);
+  const maxSvc = topSvc[0]?.[1]||1;
+  document.getElementById('chartServices').innerHTML = topSvc.map(([svc,cnt])=>`<div class="bar-row"><div class="bar-label">${escHtml(svc)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxSvc*100)}%;background:#27ae60"><span>${cnt}</span></div></div></div>`).join('') || '<div class="empty">No data yet.</div>';
 }
 
-// ── EXPORT CSV ──
 function exportCSV() {
-  const dealerMap = {};
-  allDealers.forEach(d => dealerMap[d.dealer_code] = d);
-  const rows = [['ID','Booked On','Customer Name','Mobile','Email','Chassis','Service','Dealer','Division','District','Appt Date','Time','Status','Customer Remarks','Dealer Remarks']];
-  allBookings.forEach(b => {
-    const d = dealerMap[b.dealer_code]||{};
-    rows.push([
-      b.id,
-      b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB') : '',
-      b.customer_name, b.mobile, b.email||'',
-      b.chassis_no, SVC[b.service_type_id]||'',
-      d.dealer_name||b.dealer_code, d.division||'', d.district||'',
-      b.appointment_date, b.appointment_time,
-      b.status, b.remarks||'', b.dealer_remarks||''
-    ]);
-  });
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `honda_bookings_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+  const dlrMap = {}; allDealers.forEach(d=>dlrMap[d.dealer_code]=d);
+  const rows = [['ID','Booked At','Customer Name','Mobile','Email','Chassis','Dealer Code','Dealer Name','Division','District','Thana','Service','Date','Time','Status','Customer Remarks','Dealer Remarks']];
+  filtered.forEach(b=>{const d=dlrMap[b.dealer_code]||{};rows.push([b.id,b.created_at,b.customer_name,b.mobile,b.email||'',b.chassis_no,b.dealer_code,d.dealer_name||'',d.division||'',d.district||'',d.thana||'',SERVICE_NAMES[b.service_type_id]||'',b.appointment_date,b.appointment_time,b.status,b.remarks||'',b.dealer_remarks||'']);});
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`honda_bookings_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
-// ── TABS ──
-function showTab(name, el) {
-  ['bookings','dealers','divisions'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t===name ? 'block' : 'none';
-  });
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+function showTab(name) {
+  ['bookings','dealers','charts'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===name?'block':'none';});
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',['bookings','dealers','charts'][i]===name);});
 }
 
-function cap(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+document.getElementById('adminPass').addEventListener('keydown', e=>{if(e.key==='Enter') doLogin();});
+init();
 </script>
 </body>
 </html>
