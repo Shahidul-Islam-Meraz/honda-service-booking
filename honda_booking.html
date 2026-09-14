@@ -331,7 +331,7 @@ function validateStep2() {
   document.getElementById('dealerError').classList.remove('show');
   if (!state.dealerCode) { document.getElementById('dealerError').classList.add('show'); return; }
   goTo(3);
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 2); // Day after tomorrow
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 2); tomorrow.setHours(0,0,0,0); document.getElementById('apptDate').min = tomorrow.toLocaleDateString('en-CA'); // Day after tomorrow BD time
   document.getElementById('apptDate').min = tomorrow.toISOString().split('T')[0];
   updateTimeSlots();
 }
