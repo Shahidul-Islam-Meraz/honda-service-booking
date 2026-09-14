@@ -4,219 +4,114 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Honda Bangladesh - Service Appointment</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
 
-  /* HEADER */
   .header {
     background: #CC0000;
-    padding: 14px 24px;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
   }
-  .header h1 { color: white; font-size: 20px; font-weight: bold; }
-  .header span { color: #ffcccc; font-size: 13px; }
+  .header img { height: 44px; }
+  .header-text h1 { color: white; font-size: 18px; font-weight: bold; }
+  .header-text span { color: #ffcccc; font-size: 12px; }
 
-  /* STEPS BAR */
   .steps {
     background: white;
     border-bottom: 2px solid #eee;
     display: flex;
     justify-content: center;
-    gap: 0;
-    padding: 0;
   }
-  .step {
-    padding: 14px 28px;
-    font-size: 13px;
-    color: #999;
-    border-bottom: 3px solid transparent;
-    cursor: default;
-    text-align: center;
-  }
+  .step { padding: 13px 24px; font-size: 13px; color: #999; border-bottom: 3px solid transparent; text-align: center; }
   .step.active { color: #CC0000; border-bottom: 3px solid #CC0000; font-weight: bold; }
   .step.done { color: #27ae60; border-bottom: 3px solid #27ae60; }
 
-  /* CONTAINER */
   .container { max-width: 680px; margin: 32px auto; padding: 0 16px 60px; }
 
-  /* CARD */
-  .card {
-    background: white;
-    border-radius: 10px;
-    padding: 32px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
+  .card { background: white; border-radius: 10px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
   .card h2 { font-size: 20px; color: #CC0000; margin-bottom: 6px; }
   .card p.sub { color: #888; font-size: 14px; margin-bottom: 24px; }
 
-  /* FORM ELEMENTS */
   .field { margin-bottom: 20px; }
   label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 6px; }
   label span.req { color: #CC0000; }
   input, select, textarea {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid #ddd;
-    border-radius: 6px;
-    font-size: 15px;
-    color: #333;
-    background: #fafafa;
-    transition: border 0.2s;
+    width: 100%; padding: 11px 14px; border: 1.5px solid #ddd;
+    border-radius: 6px; font-size: 15px; color: #333; background: #fafafa; transition: border 0.2s;
   }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #CC0000;
-    background: white;
-  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #CC0000; background: white; }
   textarea { resize: vertical; min-height: 80px; }
-  select { cursor: pointer; }
 
-  /* BIKE INFO BOX */
-  .bike-info {
-    background: #f0fff4;
-    border: 1.5px solid #27ae60;
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin-top: 10px;
-    display: none;
-  }
-  .bike-info.show { display: block; }
-  .bike-info p { font-size: 14px; color: #2d7a4f; margin: 2px 0; }
-  .bike-info strong { color: #1a5c38; }
-
-  /* ERROR */
-  .error-msg {
-    color: #CC0000;
-    font-size: 13px;
-    margin-top: 6px;
-    display: none;
-  }
+  .error-msg { color: #CC0000; font-size: 13px; margin-top: 6px; display: none; }
   .error-msg.show { display: block; }
 
-  /* BUTTONS */
   .btn-row { display: flex; justify-content: space-between; margin-top: 28px; gap: 12px; }
-  .btn {
-    padding: 12px 32px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-    transition: background 0.2s;
-  }
+  .btn { padding: 12px 32px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; transition: background 0.2s; }
   .btn-primary { background: #CC0000; color: white; }
   .btn-primary:hover { background: #aa0000; }
   .btn-primary:disabled { background: #e08080; cursor: not-allowed; }
   .btn-secondary { background: #eee; color: #555; }
   .btn-secondary:hover { background: #ddd; }
 
-  /* SUCCESS PAGE */
-  .success-box {
-    text-align: center;
-    padding: 40px 20px;
-  }
-  .success-box .tick {
-    font-size: 64px;
-    margin-bottom: 16px;
-  }
+  .success-box { text-align: center; padding: 40px 20px; }
+  .success-box .tick { font-size: 64px; margin-bottom: 16px; }
   .success-box h2 { color: #27ae60; font-size: 24px; margin-bottom: 10px; }
   .success-box p { color: #666; margin-bottom: 6px; font-size: 15px; }
-  .booking-ref {
-    background: #f5f5f5;
-    border-radius: 8px;
-    padding: 16px;
-    margin: 20px 0;
-    font-size: 14px;
-    text-align: left;
-  }
+  .booking-ref { background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 14px; text-align: left; }
   .booking-ref p { margin: 4px 0; }
-  .booking-ref strong { color: #333; }
 
-  /* TIME SLOTS */
   .time-slots { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-  .time-slot {
-    padding: 8px 16px;
-    border: 1.5px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    background: white;
-    transition: all 0.2s;
-  }
+  .time-slot { padding: 8px 16px; border: 1.5px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; background: white; transition: all 0.2s; }
   .time-slot:hover { border-color: #CC0000; color: #CC0000; }
   .time-slot.selected { background: #CC0000; color: white; border-color: #CC0000; }
+  .time-slot.disabled { background: #f5f5f5; color: #ccc; border-color: #eee; cursor: not-allowed; }
 
-  /* HOLIDAY NOTICE */
-  .holiday-notice {
-    background: #fff8e1;
-    border: 1px solid #ffcc00;
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 13px;
-    color: #7a6000;
-    margin-top: 8px;
-    display: none;
-  }
-  .holiday-notice.show { display: block; }
+  .closed-notice { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 14px 18px; margin-top: 10px; display: none; }
+  .closed-notice.show { display: block; }
+  .closed-notice p { font-size: 13px; color: #856404; margin: 3px 0; }
 
-  /* LOADING */
-  .loading { text-align: center; padding: 40px; color: #999; font-size: 15px; }
-
-  /* SUMMARY */
   .summary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
   .summary-row:last-child { border-bottom: none; }
   .summary-row span:first-child { color: #888; }
   .summary-row span:last-child { font-weight: bold; color: #333; text-align: right; max-width: 60%; }
 
-  @media(max-width: 600px) {
+  .qr-wrap { margin-top: 20px; }
+  .qr-wrap img { width: 160px; height: 160px; }
+
+  @media(max-width:600px) {
     .card { padding: 20px; }
-    .step { padding: 12px 14px; font-size: 11px; }
-    .btn { padding: 12px 20px; font-size: 14px; }
+    .step { padding: 12px 10px; font-size: 11px; }
+    .btn { padding: 12px 16px; font-size: 14px; }
   }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div>
-    <h1>🏍️ Honda Bangladesh</h1>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Honda_Logo.svg/120px-Honda_Logo.svg.png" alt="Honda">
+  <div class="header-text">
+    <h1>Honda Bangladesh</h1>
     <span>Service Appointment Booking</span>
   </div>
 </div>
 
 <div class="steps">
-  <div class="step active" id="s1">1. Verify Bike</div>
-  <div class="step" id="s2">2. Your Details</div>
-  <div class="step" id="s3">3. Select Dealer</div>
-  <div class="step" id="s4">4. Date & Time</div>
-  <div class="step" id="s5">5. Confirm</div>
+  <div class="step active" id="s1">1. Your Info</div>
+  <div class="step" id="s2">2. Select Dealer</div>
+  <div class="step" id="s3">3. Date & Time</div>
+  <div class="step" id="s4">4. Confirm</div>
 </div>
 
 <div class="container">
-  <div class="card" id="page1">
-    <h2>Step 1: Verify Your Bike</h2>
-    <p class="sub">Enter your chassis number to get started. This is printed on your warranty card.</p>
-    <div class="field">
-      <label>Chassis Number <span class="req">*</span></label>
-      <input type="text" id="chassisInput" placeholder="e.g. TEST001" style="text-transform:uppercase">
-      <div class="error-msg" id="chassisError">Chassis number not found. Please check and try again.</div>
-      <div class="bike-info" id="bikeInfo">
-        <p>✅ Bike verified!</p>
-        <p><strong>Model:</strong> <span id="bikeModel"></span></p>
-        <p><strong>Owner:</strong> <span id="bikeOwner"></span></p>
-      </div>
-    </div>
-    <div class="btn-row" style="justify-content:flex-end">
-      <button class="btn btn-primary" onclick="verifyChassis()">Verify & Continue →</button>
-    </div>
-  </div>
 
-  <div class="card" id="page2" style="display:none">
-    <h2>Step 2: Your Details</h2>
-    <p class="sub">Please provide your contact information.</p>
+  <!-- STEP 1: Customer Info + Chassis (optional) -->
+  <div class="card" id="page1">
+    <h2>Step 1: Your Information</h2>
+    <p class="sub">Please fill in your details to book a service appointment.</p>
     <div class="field">
       <label>Full Name <span class="req">*</span></label>
       <input type="text" id="custName" placeholder="Your full name">
@@ -231,14 +126,18 @@
       <label>Email Address</label>
       <input type="email" id="custEmail" placeholder="optional">
     </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
-      <button class="btn btn-primary" onclick="validateStep2()">Next →</button>
+    <div class="field">
+      <label>Chassis Number <span style="color:#888;font-weight:normal">(optional — found on warranty card)</span></label>
+      <input type="text" id="chassisInput" placeholder="Enter chassis number if known" style="text-transform:uppercase">
+    </div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-primary" onclick="validateStep1()">Next →</button>
     </div>
   </div>
 
-  <div class="card" id="page3" style="display:none">
-    <h2>Step 3: Select Dealer</h2>
+  <!-- STEP 2: Select Dealer -->
+  <div class="card" id="page2" style="display:none">
+    <h2>Step 2: Select Dealer</h2>
     <p class="sub">Choose your nearest Honda dealer.</p>
     <div class="field">
       <label>Division <span class="req">*</span></label>
@@ -260,17 +159,18 @@
       <div class="error-msg" id="dealerError">Please select a dealer.</div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
-      <button class="btn btn-primary" onclick="validateStep3()">Next →</button>
+      <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="validateStep2()">Next →</button>
     </div>
   </div>
 
-  <div class="card" id="page4" style="display:none">
-    <h2>Step 4: Date & Time</h2>
-    <p class="sub">Pick your preferred appointment date and time slot.</p>
+  <!-- STEP 3: Date & Time -->
+  <div class="card" id="page3" style="display:none">
+    <h2>Step 3: Date & Time</h2>
+    <p class="sub">Pick your preferred appointment date and time.</p>
     <div class="field">
       <label>Service Type <span class="req">*</span></label>
-      <select id="serviceType">
+      <select id="serviceType" onchange="updateTimeSlots()">
         <option value="">-- Select Service Type --</option>
         <option value="1">Free Service - 1st</option>
         <option value="2">Free Service - 2nd</option>
@@ -284,22 +184,17 @@
     </div>
     <div class="field">
       <label>Appointment Date <span class="req">*</span></label>
-      <input type="date" id="apptDate" onchange="checkHoliday()">
-      <div class="holiday-notice" id="holidayNotice">⚠️ This dealer is closed on <strong id="holidayDay"></strong>. Please select another date.</div>
-      <div class="error-msg" id="dateError">Please select a date.</div>
-    </div>
-    <div class="field">
-      <label>Time Slot <span class="req">*</span></label>
-      <div class="time-slots">
-        <div class="time-slot" onclick="selectTime(this, '9:00 AM')">9:00 AM</div>
-        <div class="time-slot" onclick="selectTime(this, '10:00 AM')">10:00 AM</div>
-        <div class="time-slot" onclick="selectTime(this, '11:00 AM')">11:00 AM</div>
-        <div class="time-slot" onclick="selectTime(this, '12:00 PM')">12:00 PM</div>
-        <div class="time-slot" onclick="selectTime(this, '2:00 PM')">2:00 PM</div>
-        <div class="time-slot" onclick="selectTime(this, '3:00 PM')">3:00 PM</div>
-        <div class="time-slot" onclick="selectTime(this, '4:00 PM')">4:00 PM</div>
-        <div class="time-slot" onclick="selectTime(this, '5:00 PM')">5:00 PM</div>
+      <input type="date" id="apptDate" onchange="onDateChange()">
+      <div class="closed-notice" id="closedNotice">
+        <p>⚠️ <strong>This dealer is closed on the selected date.</strong></p>
+        <p>📞 For urgent service, please contact: <strong id="dealerContact">—</strong></p>
+        <p>Please select another available date.</p>
       </div>
+      <div class="error-msg" id="dateError">Please select a valid date.</div>
+    </div>
+    <div class="field" id="timeField">
+      <label>Time Slot <span class="req">*</span></label>
+      <div class="time-slots" id="timeSlots"></div>
       <div class="error-msg" id="timeError">Please select a time slot.</div>
     </div>
     <div class="field">
@@ -307,104 +202,80 @@
       <textarea id="remarks" placeholder="Any specific issue or request? (optional)"></textarea>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goTo(3)">← Back</button>
-      <button class="btn btn-primary" onclick="validateStep4()">Next →</button>
+      <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="validateStep3()">Next →</button>
     </div>
   </div>
 
-  <div class="card" id="page5" style="display:none">
-    <h2>Step 5: Confirm Booking</h2>
-    <p class="sub">Please review your booking details before submitting.</p>
+  <!-- STEP 4: Confirm -->
+  <div class="card" id="page4" style="display:none">
+    <h2>Step 4: Confirm Booking</h2>
+    <p class="sub">Please review your details before submitting.</p>
     <div id="summaryBox"></div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-secondary" onclick="goTo(3)">← Back</button>
       <button class="btn btn-primary" id="submitBtn" onclick="submitBooking()">✔ Confirm Booking</button>
     </div>
   </div>
 
-  <div class="card" id="page6" style="display:none">
+  <!-- SUCCESS -->
+  <div class="card" id="page5" style="display:none">
     <div class="success-box">
       <div class="tick">✅</div>
       <h2>Booking Confirmed!</h2>
-      <p>Your service appointment has been booked successfully.</p>
+      <p>Your service appointment has been submitted successfully.</p>
       <p>The dealer will confirm your appointment shortly.</p>
       <div class="booking-ref" id="bookingRef"></div>
-      <button class="btn btn-primary" onclick="newBooking()" style="margin-top:16px">Book Another Appointment</button>
+      <button class="btn btn-primary" onclick="startNewBooking()" style="margin-top:16px">Book Another Appointment</button>
     </div>
   </div>
+
 </div>
 
 <script>
 const SUPABASE_URL = 'https://gqqenlxcarksuyskecpk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxcWVubHhjYXJrc3V5c2tlY3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTI3OTcsImV4cCI6MjA5NTE2ODc5N30.FDtx3E_Z73EfsHNuFQ_b2hQs44JDkgaxzK-vNtZW7u4';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const headers = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': 'Bearer ' + SUPABASE_KEY
-};
+const SERVICE_NAMES = {1:'Free Service - 1st',2:'Free Service - 2nd',3:'Free Service - 3rd',4:'Free Service - 4th',5:'Free Service - 5th',6:'Paid Service',7:'General Repair'};
+// Service durations in minutes
+const SERVICE_DURATION = {1:40, 2:60, 3:60, 4:90, 5:90, 6:120, 7:60};
 
-// State
 let state = {
-  chassis: null, bikeModel: '', bikeOwner: '',
-  name: '', mobile: '', email: '',
-  division: '', district: '',
-  dealerCode: '', dealerName: '', dealerHoliday: '',
-  serviceTypeId: '', serviceTypeName: '',
-  date: '', time: '', remarks: ''
+  name:'', mobile:'', email:'', chassis:'',
+  division:'', district:'',
+  dealerCode:'', dealerName:'', dealerHoliday:'', dealerPhone:'', dealerPits:2,
+  serviceTypeId:'', serviceTypeName:'', serviceDuration:60,
+  date:'', time:'', remarks:''
 };
-
 let allDealers = [];
 
-// ── STEP 1: Verify chassis ──
-async function verifyChassis() {
-  const val = document.getElementById('chassisInput').value.trim().toUpperCase();
-  const err = document.getElementById('chassisError');
-  const info = document.getElementById('bikeInfo');
-  err.classList.remove('show');
-  info.classList.remove('show');
-  if (!val) { err.textContent = 'Please enter a chassis number.'; err.classList.add('show'); return; }
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/chassis?chassis_no=eq.${val}&select=*`, { headers });
-  const data = await res.json();
-  if (!data.length) { err.textContent = 'Chassis number not found. Please check and try again.'; err.classList.add('show'); return; }
-  state.chassis = val;
-  state.bikeModel = data[0].model || 'Honda Bike';
-  state.bikeOwner = data[0].owner_name || '-';
-  document.getElementById('bikeModel').textContent = state.bikeModel;
-  document.getElementById('bikeOwner').textContent = state.bikeOwner;
-  info.classList.add('show');
-  setTimeout(() => goTo(2), 800);
-}
-
-// ── STEP 2: Validate customer info ──
-function validateStep2() {
+// ── STEP 1 ──
+function validateStep1() {
   let ok = true;
   const name = document.getElementById('custName').value.trim();
   const mobile = document.getElementById('custMobile').value.trim();
   document.getElementById('nameError').classList.remove('show');
   document.getElementById('mobileError').classList.remove('show');
   if (!name) { document.getElementById('nameError').classList.add('show'); ok = false; }
-  if (!mobile || mobile.length !== 11 || !mobile.startsWith('0')) {
-    document.getElementById('mobileError').classList.add('show'); ok = false;
-  }
+  if (!mobile || mobile.length !== 11 || !mobile.startsWith('0')) { document.getElementById('mobileError').classList.add('show'); ok = false; }
   if (!ok) return;
   state.name = name;
   state.mobile = mobile;
   state.email = document.getElementById('custEmail').value.trim();
-  goTo(3);
+  state.chassis = document.getElementById('chassisInput').value.trim().toUpperCase() || 'N/A';
+  goTo(2);
 }
 
-// ── STEP 3: Load dealers from Supabase ──
+// ── STEP 2: Dealers ──
 async function loadDivisions() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/dealers?select=division&order=division`, { headers });
-  const data = await res.json();
-  allDealers = [];
-  const fullRes = await fetch(`${SUPABASE_URL}/rest/v1/dealers?select=*&order=dealer_name`, { headers });
-  allDealers = await fullRes.json();
-  const divs = [...new Set(data.map(d => d.division))].sort();
+  const { data } = await sb.from('dealers').select('*').order('dealer_name');
+  allDealers = data || [];
+  const divs = [...new Set(allDealers.map(d => d.division))].sort();
   const sel = document.getElementById('divSelect');
   sel.innerHTML = '<option value="">-- Select Division --</option>';
-  divs.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; sel.appendChild(o); });
+  divs.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o); });
 }
 
 function loadDistricts() {
@@ -416,8 +287,8 @@ function loadDistricts() {
   dealSel.innerHTML = '<option value="">-- Select Dealer --</option>';
   distSel.disabled = true; dealSel.disabled = true;
   if (!div) return;
-  const dists = [...new Set(allDealers.filter(d => d.division === div).map(d => d.district))].sort();
-  dists.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; distSel.appendChild(o); });
+  const dists = [...new Set(allDealers.filter(d=>d.division===div).map(d=>d.district))].sort();
+  dists.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; distSel.appendChild(o); });
   distSel.disabled = false;
 }
 
@@ -434,6 +305,8 @@ function loadDealers() {
     o.value = d.dealer_code;
     o.dataset.name = d.dealer_name;
     o.dataset.holiday = d.weekly_holiday || '';
+    o.dataset.phone = d.phone || '';
+    o.dataset.pits = d.max_slots_per_day || 2;
     o.textContent = d.dealer_name + (d.thana ? ' (' + d.thana + ')' : '');
     dealSel.appendChild(o);
   });
@@ -446,18 +319,67 @@ function dealerSelected() {
   state.dealerCode = sel.value;
   state.dealerName = opt.dataset.name || '';
   state.dealerHoliday = opt.dataset.holiday || '';
+  state.dealerPhone = opt.dataset.phone || 'N/A';
+  state.dealerPits = parseInt(opt.dataset.pits) || 2;
 }
 
-function validateStep3() {
+function validateStep2() {
   document.getElementById('dealerError').classList.remove('show');
   if (!state.dealerCode) { document.getElementById('dealerError').classList.add('show'); return; }
-  goTo(4);
-  // Set min date to tomorrow
+  goTo(3);
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   document.getElementById('apptDate').min = tomorrow.toISOString().split('T')[0];
+  updateTimeSlots();
 }
 
-// ── STEP 4: Date, time, service ──
+// ── STEP 3: Date & Time ──
+function onDateChange() {
+  const dateVal = document.getElementById('apptDate').value;
+  document.getElementById('closedNotice').classList.remove('show');
+  document.getElementById('dateError').classList.remove('show');
+  if (!dateVal) return;
+
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const day = dayNames[new Date(dateVal).getDay()];
+  const holiday = state.dealerHoliday;
+
+  if (holiday && holiday !== 'All day open' && holiday.toLowerCase().includes(day.toLowerCase())) {
+    document.getElementById('dealerContact').textContent = state.dealerPhone;
+    document.getElementById('closedNotice').classList.add('show');
+    document.getElementById('timeSlots').innerHTML = '';
+    return;
+  }
+  updateTimeSlots();
+}
+
+function updateTimeSlots() {
+  const svcId = parseInt(document.getElementById('serviceType').value);
+  if (!svcId) return;
+  const duration = SERVICE_DURATION[svcId] || 60;
+  state.serviceDuration = duration;
+  const pits = Math.max(1, Math.floor(state.dealerPits / 2));
+
+  // Generate slots from 9am to 5pm based on duration
+  const slots = [];
+  let startMin = 9 * 60; // 9:00 AM
+  const endMin = 17 * 60; // 5:00 PM
+  while (startMin + duration <= endMin) {
+    const h = Math.floor(startMin / 60);
+    const m = startMin % 60;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    const timeStr = `${h12}:${m.toString().padStart(2,'0')} ${ampm}`;
+    slots.push(timeStr);
+    startMin += duration;
+  }
+
+  const container = document.getElementById('timeSlots');
+  container.innerHTML = slots.map(t =>
+    `<div class="time-slot" onclick="selectTime(this,'${t}')">${t}</div>`
+  ).join('');
+  state.time = '';
+}
+
 function selectTime(el, time) {
   document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
@@ -465,23 +387,7 @@ function selectTime(el, time) {
   document.getElementById('timeError').classList.remove('show');
 }
 
-function checkHoliday() {
-  const dateVal = document.getElementById('apptDate').value;
-  if (!dateVal) return;
-  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const day = dayNames[new Date(dateVal).getDay()];
-  const holiday = state.dealerHoliday;
-  const notice = document.getElementById('holidayNotice');
-  const holidayDayEl = document.getElementById('holidayDay');
-  if (holiday && holiday !== 'All day open' && holiday.toLowerCase().includes(day.toLowerCase())) {
-    holidayDayEl.textContent = day + 's (' + holiday + ')';
-    notice.classList.add('show');
-  } else {
-    notice.classList.remove('show');
-  }
-}
-
-function validateStep4() {
+function validateStep3() {
   let ok = true;
   document.getElementById('serviceError').classList.remove('show');
   document.getElementById('dateError').classList.remove('show');
@@ -490,20 +396,23 @@ function validateStep4() {
   if (!svcSel.value) { document.getElementById('serviceError').classList.add('show'); ok = false; }
   if (!document.getElementById('apptDate').value) { document.getElementById('dateError').classList.add('show'); ok = false; }
   if (!state.time) { document.getElementById('timeError').classList.add('show'); ok = false; }
+  if (document.getElementById('closedNotice').classList.contains('show')) {
+    document.getElementById('dateError').textContent = 'Dealer is closed on this date. Please select another date.';
+    document.getElementById('dateError').classList.add('show'); ok = false;
+  }
   if (!ok) return;
   state.serviceTypeId = svcSel.value;
   state.serviceTypeName = svcSel.options[svcSel.selectedIndex].text;
   state.date = document.getElementById('apptDate').value;
   state.remarks = document.getElementById('remarks').value.trim();
   buildSummary();
-  goTo(5);
+  goTo(4);
 }
 
-// ── STEP 5: Summary ──
+// ── STEP 4: Summary ──
 function buildSummary() {
   const rows = [
-    ['Chassis No.', state.chassis],
-    ['Bike Model', state.bikeModel],
+    ['Chassis No.', state.chassis === 'N/A' ? 'Not provided' : state.chassis],
     ['Customer Name', state.name],
     ['Mobile', state.mobile],
     ['Email', state.email || '-'],
@@ -522,8 +431,7 @@ function buildSummary() {
 
 function formatDate(d) {
   if (!d) return '';
-  const dt = new Date(d);
-  return dt.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  return new Date(d).toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 
 // ── SUBMIT ──
@@ -544,21 +452,11 @@ async function submitBooking() {
     status: 'pending'
   };
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
-      method: 'POST',
-      headers: { ...headers, 'Prefer': 'return=representation' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (res.ok) {
-      showSuccess(data[0]);
-    } else {
-      alert('Error: ' + JSON.stringify(data));
-      btn.disabled = false;
-      btn.textContent = '✔ Confirm Booking';
-    }
+    const { data, error } = await sb.from('bookings').insert([payload]).select();
+    if (error) throw error;
+    showSuccess(data[0]);
   } catch(e) {
-    alert('Network error. Please try again.');
+    alert('Error submitting booking. Please try again.\n' + e.message);
     btn.disabled = false;
     btn.textContent = '✔ Confirm Booking';
   }
@@ -572,33 +470,53 @@ function showSuccess(booking) {
     <p><strong>Date & Time:</strong> ${formatDate(state.date)} at ${state.time}</p>
     <p><strong>Status:</strong> Pending dealer confirmation</p>
   `;
-  goTo(6);
+  goTo(5);
 }
 
-function newBooking() {
-  state = { chassis:null,bikeModel:'',bikeOwner:'',name:'',mobile:'',email:'',division:'',district:'',dealerCode:'',dealerName:'',dealerHoliday:'',serviceTypeId:'',serviceTypeName:'',date:'',time:'',remarks:'' };
+// ── BOOK ANOTHER — full reset ──
+function startNewBooking() {
+  // Reset state
+  state = {
+    name:'', mobile:'', email:'', chassis:'',
+    division:'', district:'',
+    dealerCode:'', dealerName:'', dealerHoliday:'', dealerPhone:'', dealerPits:2,
+    serviceTypeId:'', serviceTypeName:'', serviceDuration:60,
+    date:'', time:'', remarks:''
+  };
+  // Reset all form fields
+  document.getElementById('custName').value = '';
+  document.getElementById('custMobile').value = '';
+  document.getElementById('custEmail').value = '';
   document.getElementById('chassisInput').value = '';
-  document.getElementById('bikeInfo').classList.remove('show');
-  document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+  document.getElementById('divSelect').value = '';
+  document.getElementById('distSelect').innerHTML = '<option value="">-- Select District --</option>';
+  document.getElementById('distSelect').disabled = true;
+  document.getElementById('dealerSelect').innerHTML = '<option value="">-- Select Dealer --</option>';
+  document.getElementById('dealerSelect').disabled = true;
+  document.getElementById('serviceType').value = '';
+  document.getElementById('apptDate').value = '';
+  document.getElementById('remarks').value = '';
+  document.getElementById('timeSlots').innerHTML = '';
+  document.getElementById('closedNotice').classList.remove('show');
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').textContent = '✔ Confirm Booking';
+  // Clear all errors
+  document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+  // Go to step 1
   goTo(1);
 }
 
 // ── NAV ──
 function goTo(n) {
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 5; i++) {
     document.getElementById('page' + i).style.display = i === n ? 'block' : 'none';
   }
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 4; i++) {
     const s = document.getElementById('s' + i);
-    s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    if (s) s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-// Enter key on chassis field
-document.getElementById('chassisInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') verifyChassis();
-});
 
 // Init
 loadDivisions();
