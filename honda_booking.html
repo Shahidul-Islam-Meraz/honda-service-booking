@@ -368,7 +368,17 @@ function updateTimeSlots() {
     const m = startMin % 60;
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-    const timeStr = `${h12}:${m.toString().padStart(2,'0')} ${ampm}`;
+    const startStr = `${h12}:${m.toString().padStart(2,'0')} ${ampm}`;
+
+    // Calculate end time
+    const endMin2 = startMin + duration;
+    const eh = Math.floor(endMin2 / 60);
+    const em = endMin2 % 60;
+    const eampm = eh >= 12 ? 'PM' : 'AM';
+    const eh12 = eh > 12 ? eh - 12 : eh === 0 ? 12 : eh;
+    const endStr = `${eh12}:${em.toString().padStart(2,'0')} ${eampm}`;
+
+    const timeStr = `${startStr} - ${endStr}`;
     slots.push(timeStr);
     startMin += duration;
   }
