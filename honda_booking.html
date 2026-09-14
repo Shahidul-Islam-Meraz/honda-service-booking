@@ -306,7 +306,9 @@ function loadDealers() {
     o.dataset.name = d.dealer_name;
     o.dataset.holiday = d.weekly_holiday || '';
     o.dataset.phone = d.phone || '';
-    o.dataset.pits = d.max_slots_per_day || 2;
+    o.dataset.pits = d.no_of_pits || 2;
+    o.dataset.open = d.opening_time || '09:00';
+    o.dataset.close = d.closing_time || '17:00';
     o.textContent = d.dealer_name + (d.thana ? ' (' + d.thana + ')' : '');
     dealSel.appendChild(o);
   });
@@ -321,13 +323,15 @@ function dealerSelected() {
   state.dealerHoliday = opt.dataset.holiday || '';
   state.dealerPhone = opt.dataset.phone || 'N/A';
   state.dealerPits = parseInt(opt.dataset.pits) || 2;
+  state.dealerOpen = opt.dataset.open || '09:00';
+  state.dealerClose = opt.dataset.close || '17:00';
 }
 
 function validateStep2() {
   document.getElementById('dealerError').classList.remove('show');
   if (!state.dealerCode) { document.getElementById('dealerError').classList.add('show'); return; }
   goTo(3);
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 2); // Day after tomorrow
   document.getElementById('apptDate').min = tomorrow.toISOString().split('T')[0];
   updateTimeSlots();
 }
@@ -361,8 +365,12 @@ function updateTimeSlots() {
 
   // Generate slots from 9am to 5pm based on duration
   const slots = [];
-  let startMin = 9 * 60; // 9:00 AM
-  const endMin = 17 * 60; // 5:00 PM
+  // Use dealer actual opening/closing times
+  const openParts = (state.dealerOpen || '09:00').split(':');
+  const closeParts = (state.dealerClose || '17:00').split(':');
+  let startMin = parseInt(openParts[0]) * 60 + parseInt(openParts[1] || 0);
+  // startMin is now set from dealer open time
+  const endMin = parseInt(closeParts[0]) * 60 + parseInt(closeParts[1] || 0);
   while (startMin + duration <= endMin) {
     const h = Math.floor(startMin / 60);
     const m = startMin % 60;
