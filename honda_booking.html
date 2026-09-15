@@ -331,12 +331,8 @@ function validateStep2() {
   document.getElementById('dealerError').classList.remove('show');
   if (!state.dealerCode) { document.getElementById('dealerError').classList.add('show'); return; }
   goTo(3);
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 2);
-  const y = minDate.getFullYear();
-  const m = String(minDate.getMonth()+1).padStart(2,'0');
-  const d = String(minDate.getDate()).padStart(2,'0');
-  document.getElementById('apptDate').min = `${y}-${m}-${d}`;  
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 2); // Day after tomorrow
+  document.getElementById('apptDate').min = tomorrow.toISOString().split('T')[0];
   updateTimeSlots();
 }
 
@@ -457,6 +453,51 @@ function formatDate(d) {
 }
 
 // ── SUBMIT ──
+// ── SENDPULSE EMAIL ──
+const SP_CLIENT_ID = 'sp_id_3f153bc0288782529cb9387eee0e36a8';
+const SP_CLIENT_SECRET = 'sp_sk_9b34d16a4c950262363800678f82de2a';
+const SP_SENDER_EMAIL = 'hondabd.servicebooking@gmail.com';
+const SP_SENDER_NAME = 'Honda Bangladesh Service';
+
+async function getSendPulseToken() {
+  const res = await fetch('https://api.sendpulse.com/oauth/access_token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grant_type: 'client_credentials', client_id: SP_CLIENT_ID, client_secret: SP_CLIENT_SECRET })
+  });
+  const data = await res.json();
+  return data.access_token;
+}
+
+async function sendEmail(token, toEmail, toName, subject, htmlContent) {
+  if (!toEmail) return;
+  await fetch('https://api.sendpulse.com/smtp/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+      email: {
+        from: { name: SP_SENDER_NAME, email: SP_SENDER_EMAIL },
+        to: [{ name: toName, email: toEmail }],
+        subject: subject,
+        html: htmlContent
+      }
+    })
+  });
+}
+
+async function sendBookingEmails(booking) {
+  try {
+    const token = await getSendPulseToken();
+    const dateStr = formatDate(state.date);
+    if (state.email) {
+      const customerHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><div style="background:#CC0000;padding:20px;text-align:center;"><h1 style="color:white;margin:0;">Honda Bangladesh</h1><p style="color:#ffcccc;margin:5px 0;">Service Appointment Confirmation</p></div><div style="padding:30px;background:#f9f9f9;"><h2 style="color:#333;">Dear ${state.name},</h2><p style="color:#666;">Your service appointment has been booked successfully. The dealer will confirm your appointment shortly.</p><div style="background:white;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #CC0000;"><p><strong>Booking ID:</strong> #${booking.id}</p><p><strong>Dealer:</strong> ${state.dealerName}</p><p><strong>Service Type:</strong> ${state.serviceTypeName}</p><p><strong>Date:</strong> ${dateStr}</p><p><strong>Time:</strong> ${state.time}</p><p><strong>Status:</strong> Pending dealer confirmation</p></div><p style="color:#666;">Please arrive 10 minutes before your appointment time.</p></div><div style="background:#333;padding:15px;text-align:center;"><p style="color:#aaa;margin:0;font-size:12px;">Honda Bangladesh Service Booking System</p></div></div>`;
+      await sendEmail(token, state.email, state.name, `Booking Confirmed #${booking.id} - Honda Bangladesh`, customerHtml);
+    }
+  } catch(e) {
+    console.log('Email failed:', e);
+  }
+}
+
 async function submitBooking() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -476,11 +517,12 @@ async function submitBooking() {
   try {
     const { data, error } = await sb.from('bookings').insert([payload]).select();
     if (error) throw error;
+    sendBookingEmails(data[0]);
     showSuccess(data[0]);
   } catch(e) {
     alert('Error submitting booking. Please try again.\n' + e.message);
     btn.disabled = false;
-    btn.textContent = '✔ Confirm Booking';
+    btn.textContent = '\u2714 Confirm Booking';
   }
 }
 
