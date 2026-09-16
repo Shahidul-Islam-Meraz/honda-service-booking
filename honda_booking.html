@@ -455,8 +455,12 @@ function formatDate(d) {
 // ── SUBMIT ──
 // ── SENDPULSE EMAIL ──
 async function sendBookingEmails(booking) {
+  if (!state.email) {
+    console.log('No email provided, skipping');
+    return;
+  }
   try {
-    await fetch('https://hondabooking.pythonanywhere.com/send-booking-email', {
+    const response = await fetch('https://hondabooking.pythonanywhere.com/send-booking-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -469,11 +473,12 @@ async function sendBookingEmails(booking) {
         booking_id: booking.id
       })
     });
+    const result = await response.json();
+    console.log('Email result:', result);
   } catch(e) {
     console.log('Email failed:', e);
   }
 }
-
 async function submitBooking() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
