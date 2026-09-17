@@ -497,7 +497,7 @@ async function submitBooking() {
   try {
     const { data, error } = await sb.from('bookings').insert([payload]).select();
     if (error) throw error;
-    sendBookingEmails(data[0]);
+    await sendBookingEmails(data[0]);
     showSuccess(data[0]);
   } catch(e) {
     alert('Error submitting booking. Please try again.\n' + e.message);
