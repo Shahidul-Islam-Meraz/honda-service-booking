@@ -453,6 +453,28 @@ async function updateStatus(id, newStatus) {
     headers,
     body: JSON.stringify(body)
   });
+  // Send email notification to customer
+  if (newStatus === 'confirmed' || newStatus === 'cancelled') {
+    const booking = allBookings.find(b => b.id === id);
+    if (booking && booking.email) {
+      const dlr = allDealers ? allDealers.find(d => d.dealer_code === booking.dealer_code) : null;
+      await fetch('https://hondabooking.pythonanywhere.com/notify-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_email: booking.email,
+          customer_name: booking.customer_name,
+          dealer_name: dlr ? dlr.dealer_name : booking.dealer_code,
+          service_type: SERVICE_NAMES[booking.service_type_id] || '-',
+          date: booking.appointment_date,
+          time: booking.appointment_time,
+          booking_id: booking.id,
+          status: newStatus,
+          reason: ''
+        })
+      }).catch(e => console.log('Email failed:', e));
+    }
+  }
   loadBookings();
 }
 
