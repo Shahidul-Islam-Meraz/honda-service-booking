@@ -330,6 +330,7 @@ const headers = {
 
 let currentDealer = null;
 let allBookings = [];
+let allDealers = [];
 let remarkBookingId = null;
 
 // ── LOGIN ──
@@ -344,6 +345,8 @@ async function doLogin() {
   const data = await res.json();
   if (!data.length) { err.textContent = 'Dealer code not found. Please check and try again.'; err.classList.add('show'); return; }
   currentDealer = data[0];
+  const dealersRes = await fetch(`${SUPABASE_URL}/rest/v1/dealers?select=*`, { headers });
+  allDealers = await dealersRes.json();
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('dashboardPage').style.display = 'block';
   document.getElementById('headerDealerName').textContent = currentDealer.dealer_name + ' — ' + currentDealer.district;
