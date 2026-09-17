@@ -309,6 +309,7 @@ function loadDealers() {
     o.dataset.pits = d.no_of_pits || 2;
     o.dataset.open = d.opening_time || '09:00';
     o.dataset.close = d.closing_time || '17:00';
+    o.dataset.email = d.email || '';
     o.textContent = d.dealer_name + (d.thana ? ' (' + d.thana + ')' : '');
     dealSel.appendChild(o);
   });
