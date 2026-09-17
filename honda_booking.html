@@ -456,27 +456,23 @@ function formatDate(d) {
 
 // ── SUBMIT ──
 // ── SENDPULSE EMAIL ──
-async function sendBookingEmails(booking) {
-  try {
-    await fetch('https://hondabooking.pythonanywhere.com/notify-dealer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        dealer_email: state.dealerEmail || 'shahidulmeraz@gmail.com',
-        dealer_name: state.dealerName,
-        booking_id: booking.id,
-        customer_name: state.name,
-        mobile: state.mobile,
-        service_type: state.serviceTypeName,
-        date: formatDate(state.date),
-        time: state.time,
-        chassis: state.chassis,
-        remarks: state.remarks
-      })
-    });
-  } catch(e) {
-    console.log('Dealer notification failed:', e);
-  }
+function sendBookingEmails(booking) {
+  fetch('https://hondabooking.pythonanywhere.com/notify-dealer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      dealer_email: state.dealerEmail || 'shahidulmeraz@gmail.com',
+      dealer_name: state.dealerName,
+      booking_id: booking.id,
+      customer_name: state.name,
+      mobile: state.mobile,
+      service_type: state.serviceTypeName,
+      date: formatDate(state.date),
+      time: state.time,
+      chassis: state.chassis,
+      remarks: state.remarks
+    })
+  }).catch(e => console.log('Dealer notification failed:', e));
 }
 async function submitBooking() {
   const btn = document.getElementById('submitBtn');
@@ -497,7 +493,7 @@ async function submitBooking() {
   try {
     const { data, error } = await sb.from('bookings').insert([payload]).select();
     if (error) throw error;
-    await sendBookingEmails(data[0]);
+    sendBookingEmails(data[0]);
     showSuccess(data[0]);
   } catch(e) {
     alert('Error submitting booking. Please try again.\n' + e.message);
