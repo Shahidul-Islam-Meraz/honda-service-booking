@@ -457,28 +457,25 @@ function formatDate(d) {
 // ── SUBMIT ──
 // ── SENDPULSE EMAIL ──
 async function sendBookingEmails(booking) {
-  if (!state.email) {
-    console.log('No email provided, skipping');
-    return;
-  }
   try {
-    const response = await fetch('https://hondabooking.pythonanywhere.com/send-booking-email', {
+    await fetch('https://hondabooking.pythonanywhere.com/notify-dealer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customer_email: state.email,
-        customer_name: state.name,
+        dealer_email: state.dealerEmail || 'shahidulmeraz@gmail.com',
         dealer_name: state.dealerName,
+        booking_id: booking.id,
+        customer_name: state.name,
+        mobile: state.mobile,
         service_type: state.serviceTypeName,
         date: formatDate(state.date),
         time: state.time,
-        booking_id: booking.id
+        chassis: state.chassis,
+        remarks: state.remarks
       })
     });
-    const result = await response.json();
-    console.log('Email result:', result);
   } catch(e) {
-    console.log('Email failed:', e);
+    console.log('Dealer notification failed:', e);
   }
 }
 async function submitBooking() {
