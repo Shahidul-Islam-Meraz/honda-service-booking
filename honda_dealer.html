@@ -321,7 +321,7 @@
 <script>
 const SUPABASE_URL = 'https://gqqenlxcarksuyskecpk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxcWVubHhjYXJrc3V5c2tlY3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1OTI3OTcsImV4cCI6MjA5NTE2ODc5N30.FDtx3E_Z73EfsHNuFQ_b2hQs44JDkgaxzK-vNtZW7u4';
-const DEALER_PIN = 'honda123'; // simple shared PIN for now
+//const DEALER_PIN = 'honda123'; // simple shared PIN for now
 
 const headers = {
   'Content-Type': 'application/json',
@@ -343,10 +343,15 @@ async function doLogin() {
   const err  = document.getElementById('loginError');
   err.classList.remove('show');
   if (!code) { err.textContent = 'Please enter your dealer code.'; err.classList.add('show'); return; }
-  if (pin !== DEALER_PIN) { err.textContent = 'Incorrect PIN. Please try again.'; err.classList.add('show'); return; }
   const res = await fetch(`${SUPABASE_URL}/rest/v1/dealers?dealer_code=eq.${code}&select=*`, { headers });
   const data = await res.json();
   if (!data.length) { err.textContent = 'Dealer code not found. Please check and try again.'; err.classList.add('show'); return; }
+
+  if (pin !== data[0].dashboard_pin) {
+    err.textContent = 'Incorrect PIN. Please try again.';
+    err.classList.add('show');
+    return;
+  }
   currentDealer = data[0];
   const dealersRes = await fetch(`${SUPABASE_URL}/rest/v1/dealers?select=*`, { headers });
   allDealers = await dealersRes.json();
