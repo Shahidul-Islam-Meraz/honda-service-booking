@@ -508,11 +508,16 @@ function closeModal() {
 }
 async function saveRemark() {
   const text = document.getElementById('remarkText').value.trim();
-  await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${remarkBookingId}`, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify({ dealer_remarks: text })
+  const { error } = await sb.rpc('update_booking_status', {
+    p_booking_id: remarkBookingId,
+    p_dealer_code: currentDealer.dealer_code,
+    p_dealer_pin: currentDealer.dashboard_pin,
+    p_dealer_remarks: text
   });
+  if (error) {
+    alert('Failed to save remark: ' + error.message);
+    return;
+  }
   closeModal();
   loadBookings();
 }
