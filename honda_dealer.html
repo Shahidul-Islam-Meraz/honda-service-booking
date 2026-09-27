@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Honda Bangladesh - Dealer Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
@@ -327,6 +328,8 @@ const headers = {
   'apikey': SUPABASE_KEY,
   'Authorization': 'Bearer ' + SUPABASE_KEY
 };
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentDealer = null;
 let allBookings = [];
@@ -449,19 +452,25 @@ function renderTable(bookings) {
 async function updateStatus(id, newStatus) {
   const label = newStatus === 'confirmed' ? 'confirm' : newStatus === 'completed' ? 'mark as completed' : 'cancel';
   if (!confirm(`Are you sure you want to ${label} booking #${id}?`)) return;
-  const body = { status: newStatus };
-  if (newStatus === 'confirmed') body.confirmed_time = new Date().toISOString();
-  await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${id}`, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify(body)
+
+  const { error } = await sb.rpc('update_booking_status', {
+    p_booking_id: id,
+    p_dealer_code: currentDealer.dealer_code,
+    p_dealer_pin: currentDealer.dashboard_pin,
+    p_new_status: newStatus
   });
+
+  if (error) {
+    alert('Failed to update booking: ' + error.message);
+    return;
+  }
+
   // Send email notification to customer
   if (newStatus === 'confirmed' || newStatus === 'cancelled') {
     const booking = allBookings.find(b => b.id === id);
     if (booking && booking.email) {
       const dlr = allDealers ? allDealers.find(d => d.dealer_code === booking.dealer_code) : null;
-      await fetch('https://hondabooking.pythonanywhere.com/notify-status', {
+      fetch('https://hondabooking.pythonanywhere.com/notify-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
