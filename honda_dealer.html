@@ -282,6 +282,22 @@
       </div>
     </div>
 
+        <!-- EMAIL CONNECTION -->
+    <div class="table-wrap" style="margin-bottom:20px;padding:20px">
+      <div class="table-title" style="border-bottom:none;padding:0 0 12px 0">
+        <span>📧 Connect Your Email</span>
+      </div>
+      <p style="color:#666;font-size:13px;margin-bottom:14px">
+        Connect your Gmail so booking confirmations to customers come from your own email address instead of a central one.
+        <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color:#CC0000">How to generate an App Password →</a>
+      </p>
+      <div id="senderStatus" style="margin-bottom:12px;font-size:13px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input type="email" id="senderEmail" placeholder="Your Gmail address" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:14px">
+        <input type="text" id="senderAppPassword" placeholder="16-character App Password" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:14px">
+        <button class="btn-login" style="width:auto;padding:9px 20px" onclick="connectEmail()">Connect</button>
+      </div>
+    </div>
     <!-- FILTERS -->
     <div class="filters">
       <label>Filter:</label>
@@ -360,6 +376,7 @@ async function doLogin() {
   document.getElementById('dashboardPage').style.display = 'block';
   document.getElementById('headerDealerName').textContent = currentDealer.dealer_name + ' — ' + currentDealer.district;
   loadBookings();
+  checkSenderStatus();
 }
 
 document.getElementById('loginCode').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
@@ -385,6 +402,42 @@ async function loadBookings() {
   applyFilter();
 }
 
+async function connectEmail() {
+  const email = document.getElementById('senderEmail').value.trim();
+  const appPassword = document.getElementById('senderAppPassword').value.trim().replace(/\s/g, '');
+  const statusEl = document.getElementById('senderStatus');
+
+  if (!email || !appPassword) {
+    statusEl.innerHTML = '<span style="color:#CC0000">Please fill in both fields.</span>';
+    return;
+  }
+
+  const { error } = await sb.rpc('connect_dealer_email', {
+    p_dealer_code: currentDealer.dealer_code,
+    p_dealer_pin: currentDealer.dashboard_pin,
+    p_email_address: email,
+    p_app_password: appPassword
+  });
+
+  if (error) {
+    statusEl.innerHTML = '<span style="color:#CC0000">Failed: ' + error.message + '</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:#27ae60">✔ Connected — your emails will now come from ' + email + '</span>';
+  document.getElementById('senderAppPassword').value = '';
+}
+
+async function checkSenderStatus() {
+  const { data } = await sb.from('dealer_senders').select('email_address, is_active').eq('dealer_code', currentDealer.dealer_code).single();
+  const statusEl = document.getElementById('senderStatus');
+  if (data && data.is_active) {
+    document.getElementById('senderEmail').value = data.email_address;
+    statusEl.innerHTML = '<span style="color:#27ae60">✔ Currently connected: ' + data.email_address + '</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color:#888">Not connected yet — using central email for now.</span>';
+  }
+} 
 function updateStats() {
   document.getElementById('statTotal').textContent     = allBookings.length;
   document.getElementById('statPending').textContent   = allBookings.filter(b=>b.status==='pending').length;
