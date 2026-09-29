@@ -429,15 +429,19 @@ async function connectEmail() {
 }
 
 async function checkSenderStatus() {
-  const { data } = await sb.from('dealer_senders').select('email_address, is_active').eq('dealer_code', currentDealer.dealer_code).single();
+  const { data, error } = await sb.rpc('get_dealer_sender_status', {
+    p_dealer_code: currentDealer.dealer_code,
+    p_dealer_pin: currentDealer.dashboard_pin
+  });
   const statusEl = document.getElementById('senderStatus');
-  if (data && data.is_active) {
-    document.getElementById('senderEmail').value = data.email_address;
-    statusEl.innerHTML = '<span style="color:#27ae60">✔ Currently connected: ' + data.email_address + '</span>';
-  } else {
+  if (error || !data || !data.length || !data[0].is_active) {
     statusEl.innerHTML = '<span style="color:#888">Not connected yet — using central email for now.</span>';
+    return;
   }
-} 
+  document.getElementById('senderEmail').value = data[0].email_address;
+  statusEl.innerHTML = '<span style="color:#27ae60">✔ Currently connected: ' + data[0].email_address + '</span>';
+}
+
 function updateStats() {
   document.getElementById('statTotal').textContent     = allBookings.length;
   document.getElementById('statPending').textContent   = allBookings.filter(b=>b.status==='pending').length;
