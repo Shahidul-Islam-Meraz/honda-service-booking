@@ -456,14 +456,20 @@ function formatDate(d) {
 
 // ── SUBMIT ──
 // ── SENDPULSE EMAIL ──
-function sendBookingEmails(booking) {
-  fetch('https://hondabooking.pythonanywhere.com/notify-dealer', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      dealer_email: state.dealerEmail || 'shahidulmeraz@gmail.com',
-      dealer_name: state.dealerName,
+async function sendBookingEmails(booking) {
+  if (!state.dealerEmail) {
+    console.log('No dealer email on file, skipping notification');
+    return;
+  }
+  const { error } = await sb.from('notification_queue').insert([{
+    booking_id: booking.id,
+    channel: 'email',
+    event: 'booking_received',
+    recipient: state.dealerEmail,
+    dealer_code: state.dealerCode,
+    payload: {
       booking_id: booking.id,
+      dealer_name: state.dealerName,
       customer_name: state.name,
       mobile: state.mobile,
       service_type: state.serviceTypeName,
@@ -471,8 +477,9 @@ function sendBookingEmails(booking) {
       time: state.time,
       chassis: state.chassis,
       remarks: state.remarks
-    })
-  }).catch(e => console.log('Dealer notification failed:', e));
+    }
+  }]);
+  if (error) console.log('Failed to queue dealer notification:', error);
 }
 async function submitBooking() {
   const btn = document.getElementById('submitBtn');
