@@ -292,6 +292,7 @@
         <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color:#CC0000">How to generate an App Password →</a>
       </p>
       <div id="senderStatus" style="margin-bottom:12px;font-size:13px"></div>
+           <button class="btn-login" style="width:auto;padding:10px 20px;margin-bottom:12px" onclick="connectGoogle()">Connect with Google</button>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <input type="email" id="senderEmail" placeholder="Your Gmail address" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:14px">
         <input type="text" id="senderAppPassword" placeholder="16-character App Password" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:14px">
@@ -426,6 +427,24 @@ async function connectEmail() {
 
   statusEl.innerHTML = '<span style="color:#27ae60">✔ Connected — your emails will now come from ' + email + '</span>';
   document.getElementById('senderAppPassword').value = '';
+}
+
+async function connectGoogle() {
+  const { data: nonce, error } = await sb.rpc('create_oauth_state', {
+    p_dealer_code: currentDealer.dealer_code,
+    p_dealer_pin: currentDealer.dashboard_pin
+  });
+  if (error || !nonce) { alert('Could not start connection: ' + (error ? error.message : 'unknown error')); return; }
+  const params = new URLSearchParams({
+    client_id: '656460269375-gph94099cov6695itg9q79593ege31pl.apps.googleusercontent.com',
+    redirect_uri: 'https://gqqenlxcarksuyskecpk.supabase.co/functions/v1/swift-processor',
+    response_type: 'code',
+    scope: 'openid email https://www.googleapis.com/auth/gmail.send',
+    access_type: 'offline',
+    prompt: 'consent',
+    state: nonce
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
 }
 
 async function checkSenderStatus() {
